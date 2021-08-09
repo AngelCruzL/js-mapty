@@ -29,6 +29,7 @@ class Workout {
 }
 
 class Running extends Workout {
+  type = 'running';
   /**
    *
    * @param {Array} coords [lat, lng]
@@ -49,6 +50,7 @@ class Running extends Workout {
 }
 
 class Cycling extends Workout {
+  type = 'cycling';
   /**
    *
    * @param {Array} coords [lat, lng]
@@ -71,6 +73,7 @@ class Cycling extends Workout {
 class App {
   #map;
   #mapEvent;
+  #workouts = [];
 
   constructor() {
     this.#getPosition();
@@ -116,15 +119,54 @@ class App {
   #newWorkout(e) {
     e.preventDefault();
 
+    const type = $inputType.value;
+    const distance = +$inputDistance.value;
+    const duration = +$inputDuration.value;
+
+    const { lat, lng } = this.#mapEvent.latlng;
+    let workout;
+
+    const validateInputs = (...inputs) =>
+      inputs.every(input => Number.isFinite(input));
+    const allPositives = (...inputs) => inputs.every(input => input > 0);
+
+    if (type === 'running') {
+      const cadence = +$inputCadence.value;
+
+      if (
+        !validateInputs(distance, duration, cadence) ||
+        !allPositives(distance, duration, cadence)
+      )
+        return alert('Please enter positives numbers');
+
+      workout = new Running([lat, lng], distance, duration, cadence);
+    }
+
+    if (type === 'cycling') {
+      const elevation = +$inputElevation.value;
+
+      if (
+        !validateInputs(elevation, duration, elevation) ||
+        !allPositives(distance, duration)
+      )
+        return alert('Please enter positives numbers');
+
+      workout = new Cycling([lat, lng], distance, duration, elevation);
+    }
+
+    this.#workouts.push(workout);
+
+    this.renderWorkoutMarker(workout);
+
     $inputDistance.value =
       $inputDuration.value =
       $inputCadence.value =
       $inputElevation.value =
         '';
+  }
 
-    const { lat, lng } = this.#mapEvent.latlng;
-
-    L.marker([lat, lng])
+  renderWorkoutMarker(workout) {
+    L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
         L.popup({
@@ -132,7 +174,7 @@ class App {
           minWidth: 100,
           autoClose: false,
           closeOnClick: false,
-          className: 'running-popup',
+          className: `${workout.type}-popup`,
         })
       )
       .setPopupContent('Workout')

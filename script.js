@@ -11,7 +11,6 @@ const $inputElevation = document.querySelector('.form__input--elevation');
 class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-10);
-  clicks = 0;
 
   /**
    *
@@ -32,10 +31,6 @@ class Workout {
     this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
       months[this.date.getMonth()]
     } ${this.date.getDate()}`;
-  }
-
-  click() {
-    this.clicks++;
   }
 }
 
@@ -91,6 +86,7 @@ class App {
 
   constructor() {
     this.#getPosition();
+    this.#getLocalStorage();
     $form.addEventListener('submit', this.#newWorkout.bind(this));
     $inputType.addEventListener('change', this.#toggleElevationField);
     $containerWorkouts.addEventListener('click', this.#moveToPopup.bind(this));
@@ -117,6 +113,9 @@ class App {
     }).addTo(this.#map);
 
     this.#map.on('click', this.#showForm.bind(this));
+
+    // Render the markers from localStorage
+    this.#workouts.forEach(workout => this.#renderWorkoutMarker(workout));
   }
 
   #showForm(mapEv) {
@@ -183,6 +182,8 @@ class App {
     this.#renderWorkout(workout);
 
     this.#hideForm();
+
+    this.#setLocalStorage();
   }
 
   #renderWorkoutMarker(workout) {
@@ -264,7 +265,6 @@ class App {
     const workout = this.#workouts.find(
       work => work.id === workoutEl.dataset.id
     );
-    console.log(workout);
 
     this.#map.setView(workout.coords, this.#mapZoomLevel, {
       animate: true,
@@ -272,8 +272,25 @@ class App {
         duration: 1,
       },
     });
+  }
 
-    workout.click();
+  #setLocalStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  #getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+
+    if (!data) return;
+
+    this.#workouts = data;
+
+    this.#workouts.forEach(this.#renderWorkout);
+  }
+
+  reset() {
+    localStorage.removeItem('workouts');
+    location.reload();
   }
 }
 

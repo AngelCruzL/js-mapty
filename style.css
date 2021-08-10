@@ -58,7 +58,7 @@ a:visited {
 .workouts {
   list-style: none;
   height: 77vh;
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: hidden;
 }
 
